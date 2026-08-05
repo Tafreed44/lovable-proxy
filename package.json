@@ -1,7 +1,7 @@
 {
   "name": "lovable-proxy",
   "version": "1.0.0",
-  "description": "Proxy server for Lovable Unlimited Chrome extension",
+  "description": "Proxy for Lovable Unlimited extension",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
