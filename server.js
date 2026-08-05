@@ -6,55 +6,40 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS for all origins (needed for extension to call the proxy)
 app.use(cors());
 app.use(express.json());
 
-// Initialize OpenAI with your API key from environment variables
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 app.post('/chat', async (req, res) => {
-  const { message, projectId, files, ...rest } = req.body;
-
-  console.log(`📩 New chat request for project ${projectId}:`, message);
-
-  // Build a system prompt that mimics Lovable's assistant style
-  const systemPrompt = `You are an AI assistant for Lovable.dev, a platform for building web applications. Provide concise, working code and explanations. Always respond in a helpful manner.`;
+  const { message, projectId } = req.body;
+  console.log(`📩 Chat from project ${projectId}:`, message);
 
   try {
-    // Call OpenAI's streaming API
     const completion = await openai.chat.completions.create({
-  model: 'gpt-3.5-turbo',   // ← change from 'gpt-4' to this
-  messages: [
-    { role: 'system', content: 'You are an AI assistant for Lovable.dev.' },
-    { role: 'user', content: message }
-  ],
-  stream: true,
-  max_tokens: 1500,
-});
+      model: 'gpt-3.5-turbo',   // use gpt-4 if you have access
+      messages: [
+        { role: 'system', content: 'You are an AI assistant for Lovable.dev.' },
+        { role: 'user', content: message }
+      ],
+      stream: true,
+      max_tokens: 1500,
+    });
 
-    // Set headers for Server-Sent Events (SSE)
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
 
-    // Stream the response in a format Lovable's UI understands
     for await (const chunk of completion) {
       const content = chunk.choices[0]?.delta?.content || '';
       if (content) {
-        // Lovable expects JSON objects with a 'type' field
-        const data = JSON.stringify({
-          type: 'text',
-          content: content
-        });
+        const data = JSON.stringify({ type: 'text', content });
         res.write(`data: ${data}\n\n`);
       }
     }
-
-    // Send final event to indicate completion
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     res.end();
   } catch (error) {
@@ -63,6 +48,4 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Proxy server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Proxy running on port ${PORT}`));
