@@ -26,14 +26,14 @@ app.post('/chat', async (req, res) => {
   try {
     // Call OpenAI's streaming API
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4', // or 'gpt-3.5-turbo' for lower cost
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message }
-      ],
-      stream: true,       // Enable streaming
-      max_tokens: 1500,
-    });
+  model: 'gpt-3.5-turbo',   // ← change from 'gpt-4' to this
+  messages: [
+    { role: 'system', content: 'You are an AI assistant for Lovable.dev.' },
+    { role: 'user', content: message }
+  ],
+  stream: true,
+  max_tokens: 1500,
+});
 
     // Set headers for Server-Sent Events (SSE)
     res.setHeader('Content-Type', 'text/event-stream');
