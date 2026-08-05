@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { OpenAI } = require('openai');
+const { Groq } = require('groq-sdk');
 const cors = require('cors');
 
 const app = express();
@@ -9,8 +9,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 app.post('/chat', async (req, res) => {
@@ -18,8 +18,8 @@ app.post('/chat', async (req, res) => {
   console.log(`📩 Chat from project ${projectId}:`, message);
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',   // use gpt-4 if you have access
+    const completion = await groq.chat.completions.create({
+      model: 'mixtral-8x7b-32768', // or 'llama3-70b-8192'
       messages: [
         { role: 'system', content: 'You are an AI assistant for Lovable.dev.' },
         { role: 'user', content: message }
