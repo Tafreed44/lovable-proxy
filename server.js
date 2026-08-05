@@ -15,11 +15,11 @@ const groq = new Groq({
 
 app.post('/chat', async (req, res) => {
   const { message, projectId } = req.body;
-  console.log(`📩 Chat from project ${projectId}:`, message);
+  console.log(`📩 Chat from ${projectId}:`, message);
 
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile', 
+      model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: 'You are an AI assistant for Lovable.dev.' },
         { role: 'user', content: message }
@@ -28,20 +28,21 @@ app.post('/chat', async (req, res) => {
       max_tokens: 1500,
     });
 
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Content-Type', 'application/json'); // ← NOT text/event-stream
     res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
 
+    // Stream JSON objects one per line (no "data:" prefix)
     for await (const chunk of completion) {
       const content = chunk.choices[0]?.delta?.content || '';
       if (content) {
-        const data = JSON.stringify({ type: 'text', content });
-        res.write(`data: ${data}\n\n`);
+        res.write(JSON.stringify({ type: 'text', content }) + '\n');
       }
     }
-    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    // Send final marker
+    res.write(JSON.stringify({ type: 'done' }) + '\n');
     res.end();
+
   } catch (error) {
     console.error('❌ Proxy error:', error);
     res.status(500).json({ error: error.message });
